@@ -37,7 +37,7 @@ def get_svg_shape(area) -> str:
 def get_coordinate_attrs(points: str, shape: str) -> str:
     """Convert <area> coordinates to SVG coordinates."""
     if shape == "polygon":
-        return 'points="{}"'.format(points)
+        return f'points="{points}"'
 
     points = points.split(",")
 
@@ -57,9 +57,7 @@ def get_coordinate_attrs(points: str, shape: str) -> str:
         height = points[3] - points[1]
 
         # rect's x and y attributes are the coordinates of the top left corner.
-        attrs = 'x="{}" y="{}" width="{}" height="{}"'.format(
-            points[0], points[1], width, height
-        )
+        attrs = f'x="{points[0]}" y="{points[1]}" width="{width}" height="{height}"'
         return attrs
 
 
@@ -73,14 +71,14 @@ def generate_svg(soup) -> str:
         print(
             "Cannot determine image dimensions. Does <img> have both a width and height?"
         )
-        print("Image:\n\t{}".format(soup.img))
+        print(f"Image:\n\t{soup.img}")
         sys.exit(1)
 
-    svg_string = """
+    svg_string = f"""
 <div style="position:relative;display:inline-block">
-    {}
+    {soup.img}
     <svg
-        viewBox="0 0 {} {}"
+        viewBox="0 0 {img_width} {img_height}"
         xmlns="http://www.w3.org/2000/svg"
         version="1.1"
         style="position:absolute;top:0;left:0"
@@ -121,9 +119,7 @@ def generate_svg(soup) -> str:
     <filter id="blur">
         <feGaussianBlur in="SourceGraphic" stdDeviation="4" />
     </filter>
-    """.format(
-        soup.img, img_width, img_height
-    )
+    """
 
     # Generate regions.
     areas = soup.map.findAll("area")
@@ -132,20 +128,18 @@ def generate_svg(soup) -> str:
         points = get_coordinate_attrs(area.get("coords"), shape)
 
         # `fill` is the inner region of the shape.
-        fill_string = '<{} {} filter="url(#blur)" class="fill" />'.format(shape, points)
+        fill_string = f'<{shape} {points} filter="url(#blur)" class="fill" />'
 
         # `stroke` is the outline of the shape. This is separate to maintain
         # a sharp stroke while blurring the fill.
-        stroke_string = '<{} {} class="stroke" stroke-linejoin="round" />'.format(
-            shape, points
-        )
-        region_string = "{}{}".format(fill_string, stroke_string)
+        stroke_string = f'<{shape} {points} class="stroke" stroke-linejoin="round" />'
+        region_string = f"{fill_string}{stroke_string}"
+
         if area.get("href"):
             # Hyperlink the shape.
             alt_text = area.get("alt")
-            region_string = '<a href="{}" alt="{}">{}</a>'.format(
-                area.get("href"), alt_text, region_string
-            )
+            region_string = f'<a href="{area.get('href')}" alt="{alt_text}">{region_string}</a>'
+
         svg_string = svg_string + region_string
 
     # Close out the open elements.
