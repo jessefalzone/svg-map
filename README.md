@@ -9,8 +9,8 @@ an image.
 
 ## Why?
 
-[Image maps](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/map) are
-a fun (if dated) tool for making an image interactive, but there are
+An [image map](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/map) is
+a fun (although dated) tool for making an image interactive, but there are
 limitations. Namely:
 
 1. `<area>` elements don't respond to many (any?) CSS styles (such as `:hover`)
