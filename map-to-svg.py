@@ -17,8 +17,10 @@ def convert_map_to_svg(file_path: str) -> str:
         return generate_svg(soup)
     except FileNotFoundError:
         print(f"The file at {file_path} was not found.")
+        sys.exit(1)
     except Exception as e:
         print(f"An error occurred: {e}")
+        sys.exit(1)
 
 
 def get_svg_shape(area) -> str:
@@ -81,7 +83,7 @@ def generate_svg(soup) -> str:
         viewBox="0 0 {} {}"
         xmlns="http://www.w3.org/2000/svg"
         version="1.1"
-        style="position:absolute"
+        style="position:absolute;top:0;left:0"
     >
     <defs>
         <style type="text/css"><![CDATA[
@@ -108,7 +110,7 @@ def generate_svg(soup) -> str:
                     transform: scale(1, 1);
                 }}
                 50% {{
-                    transform: scale(1.5, 1.5);
+                    transform: scale(1.1, 1.1);
                 }}
                 100% {{
                     transform: scale(1, 1);
