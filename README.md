@@ -39,4 +39,5 @@ that, skip poetry, and run map-to-svg.py normally.
 - Not all `<area>` attributes are accounted for (e.g. `target`).
 - Some of the style for regions is currently baked in.
 - Some styles are inlined. Maybe output a separate stylesheet?
+- The `default` area shape isn't properly supported.
 - Tests.
