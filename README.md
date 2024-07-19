@@ -36,7 +36,7 @@ that, skip poetry, and run map-to-svg.py normally.
 
 - The native image size needs to be known beforehand (that is, `<image>` must
   have `height` and `width` attributes) in order to overlay the SVG properly.
-- Not all `<area>` attributes are accounted for (e.g. `target`).
+- Not all `<area>` attributes are accounted for (e.g. `download`).
 - Some of the style for regions is currently baked in.
 - Some styles are inlined. Maybe output a separate stylesheet?
 - The `default` area shape isn't properly supported.

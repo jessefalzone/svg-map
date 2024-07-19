@@ -29,36 +29,44 @@ def get_svg_shape(area) -> str:
         "poly": "polygon",
         "rect": "rect",
         "circle": "circle",
-        "default": "polygon",
     }
-    return map_shape_to_svg.get(area)
+    return map_shape_to_svg[area]
 
 
 def get_coordinate_attrs(points: str, shape: str) -> str:
     """Convert <area> coordinates to SVG coordinates."""
-    if shape == "polygon":
-        return f'points="{points}"'
-
-    points = points.split(",")
-
     if shape == "circle":
+        point_list = points.split(",")
         # <area> coords format is x,y,radius.
-        return 'cx="{}" cy="{}" r="{}"'.format(*points)
+        return 'cx="{}" cy="{}" r="{}"'.format(*point_list)
 
-    if shape == "rect":
-        # <area> coords format is x1,y1,x2,y2, coordinates for top-left and
+    elif shape == "rect":
+        # <area> coordinate format is x1,y1,x2,y2, coordinates for top-left and
         # bottom-right of the rectangle.
-        points = [int(p) for p in points]
+        coords = [int(p) for p in points.split(",")]
+
+        # Get the width and height based on the two X coordinates. Use the
+        # absolute value because some image map generators seem to incorrectly
+        # put the bottom-right coordinate first.
 
         # Width is x2 - x1.
-        width = points[2] - points[0]
+        width = abs(coords[2] - coords[0])
 
         # Height is y2 - y1.
-        height = points[3] - points[1]
+        height = abs(coords[3] - coords[1])
+
+        # (x,y) is the coordinate of the top-left corner. Use the minimum value
+        # in case the image map generator put the bottom-right corner first.
+        x = min(coords[0], coords[2])
+        y = min(coords[1], coords[3])
 
         # rect's x and y attributes are the coordinates of the top left corner.
-        attrs = f'x="{points[0]}" y="{points[1]}" width="{width}" height="{height}"'
+        attrs = f'x="{x}" y="{y}" width="{width}" height="{height}"'
         return attrs
+
+    else:
+        # The shape is a polygon.
+        return f'points="{points}"'
 
 
 def generate_svg(soup) -> str:
@@ -90,6 +98,7 @@ def generate_svg(soup) -> str:
                 pointer-events: visible;
                 transform-origin: center;
                 transform-box: fill-box;
+                will-change: scale;
             }}
             .stroke {{
                 fill: none;
@@ -135,10 +144,12 @@ def generate_svg(soup) -> str:
         stroke_string = f'<{shape} {points} class="stroke" stroke-linejoin="round" />'
         region_string = f"{fill_string}{stroke_string}"
 
-        if area.get("href"):
+        href = area.get("href")
+        if href:
             # Hyperlink the shape.
             alt_text = area.get("alt")
-            region_string = f'<a href="{area.get('href')}" alt="{alt_text}">{region_string}</a>'
+            target = area.get("target", "_self")
+            region_string = f'<a href="{href}" alt="{alt_text}" target="{target}">{region_string}</a>'
 
         svg_string = svg_string + region_string
 
@@ -152,4 +163,5 @@ if __name__ == "__main__":
     else:
         file_path = sys.argv[1]
         svg = convert_map_to_svg(file_path)
+        print("\n")
         print(BeautifulSoup(svg, "html.parser").prettify(formatter="minimal"))
