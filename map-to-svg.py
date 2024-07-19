@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import argparse
 import sys
 from bs4 import BeautifulSoup, SoupStrainer
 
@@ -16,7 +17,7 @@ def convert_map_to_svg(file_path: str) -> str:
             )
         return generate_svg(soup)
     except FileNotFoundError:
-        print(f"The file at {file_path} was not found.")
+        print(f"File not found: {file_path}")
         sys.exit(1)
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -72,6 +73,8 @@ def get_coordinate_attrs(points: str, shape: str) -> str:
 def generate_svg(soup) -> str:
     """Build the SVG string."""
     soup.img["style"] = "max-width:100%;height:auto"
+    del soup.img["usemap"]
+
     img_width = soup.img.get("width")
     img_height = soup.img.get("height")
 
@@ -91,44 +94,49 @@ def generate_svg(soup) -> str:
         version="1.1"
         style="position:absolute;top:0;left:0"
     >
+    """
+    svg_string = (
+        svg_string
+        + """
     <defs>
         <style type="text/css"><![CDATA[
-            .fill {{
+            .fill {
                 fill: none;
                 pointer-events: visible;
                 transform-origin: center;
                 transform-box: fill-box;
                 will-change: scale;
-            }}
-            .stroke {{
+            }
+            .stroke {
                 fill: none;
                 stroke: none;
-            }}
-            .fill:hover {{
+            }
+            .fill:hover {
                 fill: #e8d71b99;
                 animation: zoom-in-zoom-out 1s ease infinite;
-            }}
-            .fill:hover + .stroke {{
-                stroke: black;
+            }
+            .fill:hover + .stroke, .stroke.stroke--visible {
+                stroke: red;
                 stroke-width: 2px;
-            }}
-            @keyframes zoom-in-zoom-out {{
-                0% {{
+            }
+            @keyframes zoom-in-zoom-out {
+                0% {
                     transform: scale(1, 1);
-                }}
-                50% {{
+                }
+                50% {
                     transform: scale(1.1, 1.1);
-                }}
-                100% {{
+                }
+                100% {
                     transform: scale(1, 1);
-                }}
-            }}
+                }
+            }
         ]]></style>
     </defs>
     <filter id="blur">
         <feGaussianBlur in="SourceGraphic" stdDeviation="4" />
     </filter>
     """
+    )
 
     # Generate regions.
     areas = soup.map.findAll("area")
@@ -137,12 +145,18 @@ def generate_svg(soup) -> str:
         points = get_coordinate_attrs(area.get("coords"), shape)
 
         # `fill` is the inner region of the shape.
-        fill_string = f'<{shape} {points} filter="url(#blur)" class="fill" />'
+        region_string = f'<{shape} {points} filter="url(#blur)" class="fill" />'
 
         # `stroke` is the outline of the shape. This is separate to maintain
         # a sharp stroke while blurring the fill.
-        stroke_string = f'<{shape} {points} class="stroke" stroke-linejoin="round" />'
-        region_string = f"{fill_string}{stroke_string}"
+        if not args.no_strokes:
+            classes = "stroke"
+            if args.visible_strokes:
+                classes = classes + " stroke--visible"
+            stroke_string = (
+                f'<{shape} {points} class="{classes}" stroke-linejoin="round" />'
+            )
+            region_string = f"{region_string}{stroke_string}"
 
         href = area.get("href")
         if href:
@@ -158,10 +172,24 @@ def generate_svg(soup) -> str:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python3 map-to-svg.py <file_path>")
-    else:
-        file_path = sys.argv[1]
-        svg = convert_map_to_svg(file_path)
-        print("\n")
-        print(BeautifulSoup(svg, "html.parser").prettify(formatter="minimal"))
+    parser = argparse.ArgumentParser(
+        description="Convert an HTML image map to SVG shapes."
+    )
+    parser.add_argument(
+        "file", type=str, help="The image map file, either .map or .html."
+    )
+    parser.add_argument(
+        "--no-strokes",
+        action="store_true",
+        help="Don't show an outline around the shapes.",
+    )
+    parser.add_argument(
+        "--visible-strokes",
+        action="store_true",
+        help="Always show strokes, otherwise they are only visible on hover. Ignored if --no-strokes is enabled.",
+    )
+
+    args = parser.parse_args()
+    svg = convert_map_to_svg(args.file)
+    print("\n")
+    print(BeautifulSoup(svg, "html.parser").prettify(formatter="minimal"))

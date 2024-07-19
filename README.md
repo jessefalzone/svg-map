@@ -24,8 +24,6 @@ to style regions, and we can scale them along with the image.
 ## Installation and Usage
 
 I'm new to [poetry](https://python-poetry.org/docs/), so I'm trying it out here.
-The only dependency is BeautifulSoup4, so as an alternative you can install
-that, skip poetry, and run map-to-svg.py normally.
 
 1. Install [poetry](https://python-poetry.org/docs/#installation).
 1. Clone this repo.
