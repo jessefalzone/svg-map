@@ -30,6 +30,20 @@ I'm new to [poetry](https://python-poetry.org/docs/), so I'm trying it out here.
 1. `poetry install`
 1. `poetry run python map-to-svg.py <path/to/.map/or/.html>`
 
+```txt
+usage: map-to-svg.py [-h] [--no-strokes] [--visible-strokes] file
+
+Convert an HTML image map to SVG shapes.
+
+positional arguments:
+  file               The image map file, either .map or .html.
+
+options:
+  -h, --help         show this help message and exit
+  --no-strokes       Don't show an outline around the shapes.
+  --visible-strokes  Always show strokes, otherwise they are only visible on hover. Ignored if --no-strokes is enabled.
+```
+
 ## TODO/Limitations
 
 - The native image size needs to be known beforehand (that is, `<image>` must
@@ -37,5 +51,5 @@ I'm new to [poetry](https://python-poetry.org/docs/), so I'm trying it out here.
 - Not all `<area>` attributes are accounted for (e.g. `download`).
 - Some of the style for regions is currently baked in.
 - Some styles are inlined. Maybe output a separate stylesheet?
-- The `default` area shape isn't properly supported.
+- The `default` area shape isn't supported.
 - Tests.
