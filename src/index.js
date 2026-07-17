@@ -15,7 +15,13 @@ const LINK_ATTRIBUTES = new Set([
   "referrerpolicy",
 ]);
 
-const GLOBAL_ATTRIBUTES = new Set(["dir", "lang", "role", "tabindex", "xml:lang"]);
+const GLOBAL_ATTRIBUTES = new Set([
+  "dir",
+  "lang",
+  "role",
+  "tabindex",
+  "xml:lang",
+]);
 
 function createSVGElement(document, name) {
   return document.createElementNS(SVG_NS, name);
@@ -28,10 +34,18 @@ function describeArea(area, index, map) {
 }
 
 function warn(area, index, map, message) {
-  console.warn(`[svg-map] Skipping ${describeArea(area, index, map)}: ${message}.`, area);
+  console.warn(
+    `[svg-map] Skipping ${describeArea(area, index, map)}: ${message}.`,
+    area,
+  );
 }
 
-function parseCoordinates(area, index, map, { limit, dropUnpaired = false } = {}) {
+function parseCoordinates(
+  area,
+  index,
+  map,
+  { limit, dropUnpaired = false } = {},
+) {
   const value = area.getAttribute("coords");
   if (value == null || value.trim() === "") {
     warn(area, index, map, "coordinates are missing or empty");
@@ -44,9 +58,15 @@ function parseCoordinates(area, index, map, { limit, dropUnpaired = false } = {}
   const coordinates = [];
   for (const part of parts) {
     const token = part.trim();
-    const floatingPointNumber = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
+    const floatingPointNumber =
+      /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
     if (!floatingPointNumber.test(token) || !Number.isFinite(Number(token))) {
-      warn(area, index, map, `coordinates contain an invalid number (${JSON.stringify(token)})`);
+      warn(
+        area,
+        index,
+        map,
+        `coordinates contain an invalid number (${JSON.stringify(token)})`,
+      );
       return null;
     }
     coordinates.push(Number(token));
@@ -86,7 +106,12 @@ function buildGeometry(area, index, map, width, height) {
       const rectWidth = Math.abs(x2 - x1);
       const rectHeight = Math.abs(y2 - y1);
       if (rectWidth === 0 || rectHeight === 0) {
-        warn(area, index, map, "a rectangle must have positive width and height");
+        warn(
+          area,
+          index,
+          map,
+          "a rectangle must have positive width and height",
+        );
         return null;
       }
       geometry = createSVGElement(document, "rect");
@@ -140,16 +165,22 @@ function isTransferableGlobalAttribute(name) {
 }
 
 function transferAttributes(area, target, includeLinkAttributes) {
-  if (area.hasAttribute("alt")) target.setAttribute("aria-label", area.getAttribute("alt"));
+  if (area.hasAttribute("alt"))
+    target.setAttribute("aria-label", area.getAttribute("alt"));
   if (area.id) target.setAttribute("data-svg-map-source-id", area.id);
 
   for (const attribute of area.attributes) {
     const name = attribute.name.toLowerCase();
     if (name === "id" || name === "alt" || name === "title") continue;
     if (name === "class") {
-      for (const className of attribute.value.split(/\s+/).filter(Boolean)) target.classList.add(className);
-    } else if ((includeLinkAttributes && LINK_ATTRIBUTES.has(name)) || isTransferableGlobalAttribute(name)) {
-      if (name === "xml:lang") target.setAttributeNS(XML_NS, name, attribute.value);
+      for (const className of attribute.value.split(/\s+/).filter(Boolean))
+        target.classList.add(className);
+    } else if (
+      (includeLinkAttributes && LINK_ATTRIBUTES.has(name)) ||
+      isTransferableGlobalAttribute(name)
+    ) {
+      if (name === "xml:lang")
+        target.setAttributeNS(XML_NS, name, attribute.value);
       else target.setAttribute(name, attribute.value);
     }
   }
@@ -181,7 +212,10 @@ function buildRegion(area, index, map, width, height) {
 function explicitDimensions(image) {
   const width = Number(image.getAttribute("width"));
   const height = Number(image.getAttribute("height"));
-  return width > 0 && height > 0 && Number.isFinite(width) && Number.isFinite(height)
+  return width > 0 &&
+    height > 0 &&
+    Number.isFinite(width) &&
+    Number.isFinite(height)
     ? { width, height }
     : null;
 }
@@ -234,9 +268,11 @@ function mapNameFromUsemap(image) {
 function findMap(image) {
   const name = mapNameFromUsemap(image);
   if (!name) return null;
-  return Array.from(image.ownerDocument.getElementsByTagName("map")).find(
-    (map) => map.getAttribute("name") === name,
-  ) || null;
+  return (
+    Array.from(image.ownerDocument.getElementsByTagName("map")).find(
+      (map) => map.getAttribute("name") === name,
+    ) || null
+  );
 }
 
 function installOverlay(image, svg) {
@@ -268,13 +304,19 @@ async function performConversion(image) {
 
   const map = findMap(image);
   if (!map) {
-    console.warn(`[svg-map] No matching <map> found for usemap=${JSON.stringify(image.getAttribute("usemap"))}.`, image);
+    console.warn(
+      `[svg-map] No matching <map> found for usemap=${JSON.stringify(image.getAttribute("usemap"))}.`,
+      image,
+    );
     return null;
   }
 
   const dimensions = await waitForDimensions(image);
   if (!dimensions) {
-    console.warn("[svg-map] Image dimensions could not be determined; leaving its native image map active.", image);
+    console.warn(
+      "[svg-map] Image dimensions could not be determined; leaving its native image map active.",
+      image,
+    );
     return null;
   }
 
@@ -283,12 +325,17 @@ async function performConversion(image) {
 
   const areas = Array.from(map.querySelectorAll("area"));
   const regions = areas
-    .map((area, index) => buildRegion(area, index, map, dimensions.width, dimensions.height))
+    .map((area, index) =>
+      buildRegion(area, index, map, dimensions.width, dimensions.height),
+    )
     .filter(Boolean)
     .reverse();
 
   if (regions.length === 0) {
-    console.warn("[svg-map] The matching map has no valid regions; leaving its native image map active.", map);
+    console.warn(
+      "[svg-map] The matching map has no valid regions; leaving its native image map active.",
+      map,
+    );
     return null;
   }
 
@@ -301,9 +348,12 @@ async function performConversion(image) {
 
 /** Convert one image map, resolving after image dimensions are available. */
 export function convertImageMap(image) {
-  if (convertedImages.has(image)) return Promise.resolve(convertedImages.get(image));
+  if (convertedImages.has(image))
+    return Promise.resolve(convertedImages.get(image));
   if (pendingConversions.has(image)) return pendingConversions.get(image);
-  const conversion = performConversion(image).finally(() => pendingConversions.delete(image));
+  const conversion = performConversion(image).finally(() =>
+    pendingConversions.delete(image),
+  );
   if (image && (typeof image === "object" || typeof image === "function")) {
     pendingConversions.set(image, conversion);
   }
@@ -313,7 +363,8 @@ export function convertImageMap(image) {
 /** Convert every img[usemap] in root. */
 export async function convertAll(root = document) {
   const images = [];
-  if (root && root.nodeType === 1 && root.matches("img[usemap]")) images.push(root);
+  if (root && root.nodeType === 1 && root.matches("img[usemap]"))
+    images.push(root);
   if (root && typeof root.querySelectorAll === "function") {
     images.push(...root.querySelectorAll("img[usemap]"));
   }
@@ -323,7 +374,9 @@ export async function convertAll(root = document) {
 
 function ready(document) {
   if (document.readyState !== "loading") return Promise.resolve();
-  return new Promise((resolve) => document.addEventListener("DOMContentLoaded", resolve, { once: true }));
+  return new Promise((resolve) =>
+    document.addEventListener("DOMContentLoaded", resolve, { once: true }),
+  );
 }
 
 /** Wait for DOM readiness, then convert images within root. */
