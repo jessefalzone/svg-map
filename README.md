@@ -1,55 +1,133 @@
-# SVG-MAP
+# SVG Map
 
-Build _enhanced_, clickable, animate-able image maps using SVG shapes (polygon,
-rect, circle). This tool converts HTML image maps (generally I make these in
-GIMP, which outputs a .map file) to SVG shapes and accurately overlays them on
-an image.
+Turn HTML image maps into responsive, CSS-styleable SVG overlays in the browser.
+The converter has no runtime dependencies, preserves the original `<map>` in the
+DOM, and works with current Chrome, Firefox, Safari, and Edge.
 
 ![A simple demo of the SVG overlay.](./demo.webp)
 
-## Why?
+## Browser script
 
-An [image map](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/map) is
-a fun (although dated) tool for making an image interactive, but there are
-limitations. Namely:
+Load the classic bundle after your markup or from `<head>`. It exposes
+`window.SVGMap` and automatically converts every `img[usemap]` once the DOM is
+ready.
 
-1. `<area>` elements don't respond to many (any?) CSS styles (such as `:hover`)
-   so it can be hard to find, or differentiate between, regions.
-1. Regions are based on coordinates relative to the image size, so they are not
-   responsive.
+```html
+<script src="./dist/svg-map.js"></script>
 
-SVGs don't have those limitations. We can use CSS and other powerful SVG tools
-to style regions, and we can scale them along with the image.
-
-## Installation and Usage
-
-I'm new to [poetry](https://python-poetry.org/docs/), so I'm trying it out here.
-
-1. Install [poetry](https://python-poetry.org/docs/#installation).
-1. Clone this repo.
-1. `poetry install`
-1. `poetry run python map-to-svg.py <path/to/.map/or/.html>`
-
-```txt
-usage: map-to-svg.py [-h] [--no-strokes] [--visible-strokes] file
-
-Convert an HTML image map to SVG shapes.
-
-positional arguments:
-  file               The image map file, either .map or .html.
-
-options:
-  -h, --help         show this help message and exit
-  --no-strokes       Don't show an outline around the shapes.
-  --visible-strokes  Always show strokes, otherwise they are only visible on hover. Ignored if --no-strokes is enabled.
+<img
+  src="floor-plan.png"
+  srcset="floor-plan-small.png 600w, floor-plan.png 1200w"
+  sizes="100vw"
+  width="1200"
+  height="700"
+  usemap="#rooms"
+  style="max-width: 100%; height: auto"
+>
+<map name="rooms">
+  <area shape="rect" coords="50,40,300,220" href="/kitchen" alt="Kitchen">
+  <area shape="poly" coords="340,40,600,40,580,220,350,200" href="/office" alt="Office">
+</map>
 ```
 
-## TODO/Limitations
+Explicit positive `width` and `height` attributes define the coordinate space.
+When either is absent, conversion waits for the image to load and uses its
+intrinsic dimensions. CSS can stretch width and height independently: the SVG
+uses `preserveAspectRatio="none"` and remains aligned with the rendered image.
 
-- The native image size needs to be known beforehand (that is, `<image>` must
-  have `height` and `width` attributes) in order to overlay the SVG properly.
-- Not all `<area>` attributes are accounted for (e.g. `download`).
-- Some of the style for regions is currently baked in.
-- Some styles are inlined. Maybe output a separate stylesheet?
-- The `default` area shape isn't supported.
-- Tests.
+## Module API
+
+The package's ES module has no automatic side effects:
+
+```js
+import { convertImageMap, convertAll, init } from "svg-map";
+
+await convertImageMap(document.querySelector("#diagram"));
+await convertAll(document.querySelector("main"));
+await init(); // waits for DOM readiness, then converts the document
+```
+
+All functions are asynchronous:
+
+- `convertImageMap(image)` resolves to the created `SVGSVGElement`, or `null`.
+- `convertAll(root = document)` resolves to all overlays created within `root`.
+- `init(root = document)` waits for that root's document to be ready, then calls
+  `convertAll`.
+
+The converter does not watch DOM mutations. Call `convertImageMap`, `convertAll`,
+or `init` again after adding content. Repeated calls are safe and never create a
+second overlay for an already converted image.
+
+## Styling
+
+SVG Map supplies only layout, transparent hit detection, and stable hooks. Add
+your own visual treatment:
+
+```css
+.svg-map { /* positioned wrapper around the original image */ }
+.svg-map__overlay { /* responsive SVG overlay */ }
+.svg-map__link { /* linked SVG region */ }
+.svg-map__area {
+  fill: transparent;
+  stroke: transparent;
+  transition: fill 150ms, stroke 150ms;
+}
+.svg-map__link:hover .svg-map__area,
+.svg-map__link:focus .svg-map__area {
+  fill: rgb(255 210 0 / 35%);
+  stroke: #c44;
+}
+```
+
+The original image element is moved intact into `.svg-map`; its classes, inline
+styles, `srcset`, and other attributes are retained.
+
+## Shapes and attributes
+
+`rect`, `circle`, `poly`, and `default` areas are supported. A missing or unknown
+`shape` is treated as `rect`. Coordinates may be floating-point numbers;
+reversed rectangles are normalized. Extra rectangle/circle coordinates and a
+polygon's final unpaired coordinate are ignored as HTML image maps require.
+
+Linked regions transfer `href`, `target`, `download`, `ping`, `rel`, `hreflang`,
+`type`, and `referrerpolicy`. Compatible `class`, `style`, `data-*`, `aria-*`,
+`lang`, `role`, `tabindex`, and event attributes are retained. `alt` becomes
+`aria-label`, and `title` becomes an SVG `<title>`. Because the original map stays
+in the document, an area `id` is exposed as `data-svg-map-source-id` instead of
+being duplicated. Geometry and microdata-only HTML attributes are omitted.
+
+Areas are drawn in reverse source order so the first HTML area keeps native
+overlap priority. Areas without `href` remain pointer-enabled SVG geometry but
+are not wrapped in a link.
+
+Malformed or empty areas are skipped with a contextual `console.warn`. Missing
+maps, failed images, and maps without any valid region remain untouched and keep
+their native `usemap`. Once at least one region succeeds, `usemap` is removed and
+the retained `<map>` becomes inert.
+
+## Development
+
+Node 20 or newer is required for development:
+
+```sh
+npm install
+npm test
+npm run build
+```
+
+Open [`demo/index.html`](./demo/index.html) to manually check responsive sizing,
+hover styling, and keyboard navigation.
+
+## Legacy Python CLI
+
+The original Python converter remains available in [`legacy/`](./legacy/) as a
+legacy, build-time workflow. It is not required by the browser library.
+
+```sh
+cd legacy
+poetry install
+poetry run python map-to-svg.py path/to/map.html
+```
+
+Run `poetry run python map-to-svg.py --help` for the stroke-related output
+options. Existing CLI behavior is unchanged.

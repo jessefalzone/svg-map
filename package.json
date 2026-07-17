@@ -1,0 +1,38 @@
+{
+  "name": "svg-map",
+  "version": "1.0.0",
+  "description": "Responsive SVG overlays for HTML image maps",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "./dist/svg-map.es.js",
+  "module": "./dist/svg-map.es.js",
+  "browser": "./dist/svg-map.es.js",
+  "unpkg": "./dist/svg-map.js",
+  "jsdelivr": "./dist/svg-map.js",
+  "exports": {
+    ".": {
+      "import": "./dist/svg-map.es.js",
+      "default": "./dist/svg-map.es.js"
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "jsdom": "^26.1.0",
+    "vite": "^6.2.6",
+    "vitest": "^3.1.1"
+  }
+}
