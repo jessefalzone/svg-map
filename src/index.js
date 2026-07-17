@@ -173,6 +173,7 @@ function buildRegion(area, index, map, width, height) {
   const link = createSVGElement(area.ownerDocument, "a");
   link.classList.add("svg-map__link");
   transferAttributes(area, link, true);
+  if (!area.hasAttribute("tabindex")) link.setAttribute("tabindex", "0");
   link.append(geometry);
   return link;
 }

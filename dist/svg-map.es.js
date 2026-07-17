@@ -19,13 +19,13 @@ function d(t, e, n, r) {
   console.warn(`[svg-map] Skipping ${E(t, e, n)}: ${r}.`, t);
 }
 function D(t, e, n, { limit: r, dropUnpaired: l = !1 } = {}) {
-  const s = t.getAttribute("coords");
-  if (s == null || s.trim() === "")
+  const o = t.getAttribute("coords");
+  if (o == null || o.trim() === "")
     return d(t, e, n, "coordinates are missing or empty"), null;
-  let o = s.split(",");
-  r && (o = o.slice(0, r)), l && o.length % 2 === 1 && o.pop();
+  let s = o.split(",");
+  r && (s = s.slice(0, r)), l && s.length % 2 === 1 && s.pop();
   const i = [];
-  for (const c of o) {
+  for (const c of s) {
     const u = c.trim();
     if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(u) || !Number.isFinite(Number(u)))
       return d(t, e, n, `coordinates contain an invalid number (${JSON.stringify(u)})`), null;
@@ -37,35 +37,35 @@ function $(t) {
   const e = (t.getAttribute("shape") || "rect").trim().toLowerCase();
   return ["rect", "circle", "poly", "default"].includes(e) ? e : "rect";
 }
-function M(t, e, n, r, l) {
-  const s = t.ownerDocument, o = $(t);
+function x(t, e, n, r, l) {
+  const o = t.ownerDocument, s = $(t);
   let i;
-  if (o === "default")
-    i = f(s, "rect"), i.setAttribute("x", "0"), i.setAttribute("y", "0"), i.setAttribute("width", String(r)), i.setAttribute("height", String(l));
+  if (s === "default")
+    i = f(o, "rect"), i.setAttribute("x", "0"), i.setAttribute("y", "0"), i.setAttribute("width", String(r)), i.setAttribute("height", String(l));
   else {
     const c = D(t, e, n, {
-      limit: o === "rect" ? 4 : o === "circle" ? 3 : void 0,
-      dropUnpaired: o === "poly"
+      limit: s === "rect" ? 4 : s === "circle" ? 3 : void 0,
+      dropUnpaired: s === "poly"
     });
     if (!c) return null;
-    if (o === "rect") {
+    if (s === "rect") {
       if (c.length < 4)
         return d(t, e, n, "a rectangle needs four coordinates"), null;
       const [u, a, p, A] = c, v = Math.abs(p - u), y = Math.abs(A - a);
       if (v === 0 || y === 0)
         return d(t, e, n, "a rectangle must have positive width and height"), null;
-      i = f(s, "rect"), i.setAttribute("x", String(Math.min(u, p))), i.setAttribute("y", String(Math.min(a, A))), i.setAttribute("width", String(v)), i.setAttribute("height", String(y));
-    } else if (o === "circle") {
+      i = f(o, "rect"), i.setAttribute("x", String(Math.min(u, p))), i.setAttribute("y", String(Math.min(a, A))), i.setAttribute("width", String(v)), i.setAttribute("height", String(y));
+    } else if (s === "circle") {
       if (c.length < 3)
         return d(t, e, n, "a circle needs three coordinates"), null;
       const [u, a, p] = c;
       if (p <= 0)
         return d(t, e, n, "a circle must have a positive radius"), null;
-      i = f(s, "circle"), i.setAttribute("cx", String(u)), i.setAttribute("cy", String(a)), i.setAttribute("r", String(p));
+      i = f(o, "circle"), i.setAttribute("cx", String(u)), i.setAttribute("cy", String(a)), i.setAttribute("r", String(p));
     } else {
       if (c.length < 6)
         return d(t, e, n, "a polygon needs at least six coordinates"), null;
-      i = f(s, "polygon");
+      i = f(o, "polygon");
       const u = [];
       for (let a = 0; a < c.length; a += 2)
         u.push(`${c[a]},${c[a + 1]}`);
@@ -74,7 +74,7 @@ function M(t, e, n, r, l) {
   }
   return i.classList.add("svg-map__area"), i.setAttribute("fill", "transparent"), i.setAttribute("pointer-events", "all"), i;
 }
-function T(t) {
+function M(t) {
   return t === "class" || t === "style" || L.has(t) || t.startsWith("data-") || t.startsWith("aria-") || t.startsWith("on");
 }
 function g(t, e, n) {
@@ -83,21 +83,21 @@ function g(t, e, n) {
     const l = r.name.toLowerCase();
     if (!(l === "id" || l === "alt" || l === "title"))
       if (l === "class")
-        for (const s of r.value.split(/\s+/).filter(Boolean)) e.classList.add(s);
-      else (n && N.has(l) || T(l)) && (l === "xml:lang" ? e.setAttributeNS(S, l, r.value) : e.setAttribute(l, r.value));
+        for (const o of r.value.split(/\s+/).filter(Boolean)) e.classList.add(o);
+      else (n && N.has(l) || M(l)) && (l === "xml:lang" ? e.setAttributeNS(S, l, r.value) : e.setAttribute(l, r.value));
   }
 }
-function x(t, e, n, r, l) {
-  const s = M(t, e, n, r, l);
-  if (!s) return null;
+function T(t, e, n, r, l) {
+  const o = x(t, e, n, r, l);
+  if (!o) return null;
   if (t.hasAttribute("title")) {
     const i = f(t.ownerDocument, "title");
-    i.textContent = t.getAttribute("title"), s.prepend(i);
+    i.textContent = t.getAttribute("title"), o.prepend(i);
   }
   if (!t.hasAttribute("href"))
-    return g(t, s, !1), s;
-  const o = f(t.ownerDocument, "a");
-  return o.classList.add("svg-map__link"), g(t, o, !0), o.append(s), o;
+    return g(t, o, !1), o;
+  const s = f(t.ownerDocument, "a");
+  return s.classList.add("svg-map__link"), g(t, s, !0), t.hasAttribute("tabindex") || s.setAttribute("tabindex", "0"), s.append(o), s;
 }
 function I(t) {
   const e = Number(t.getAttribute("width")), n = Number(t.getAttribute("height"));
@@ -110,15 +110,15 @@ function _(t) {
   const e = I(t) || m(t);
   return e ? Promise.resolve(e) : t.complete ? Promise.resolve(null) : new Promise((n) => {
     const r = () => {
-      t.removeEventListener("load", l), t.removeEventListener("error", s);
+      t.removeEventListener("load", l), t.removeEventListener("error", o);
     }, l = () => {
       r(), n(m(t));
-    }, s = () => {
+    }, o = () => {
       r(), n(null);
     };
-    t.addEventListener("load", l, { once: !0 }), t.addEventListener("error", s, { once: !0 });
-    const o = m(t);
-    o && (r(), n(o));
+    t.addEventListener("load", l, { once: !0 }), t.addEventListener("error", o, { once: !0 });
+    const s = m(t);
+    s && (r(), n(s));
   });
 }
 function B(t) {
@@ -154,8 +154,8 @@ async function C(t) {
     return console.warn("[svg-map] Image dimensions could not be determined; leaving its native image map active.", t), null;
   const r = f(t.ownerDocument, "svg");
   r.setAttribute("viewBox", `0 0 ${n.width} ${n.height}`);
-  const s = Array.from(e.querySelectorAll("area")).map((o, i) => x(o, i, e, n.width, n.height)).filter(Boolean).reverse();
-  return s.length === 0 ? (console.warn("[svg-map] The matching map has no valid regions; leaving its native image map active.", e), null) : (r.append(...s), W(t, r), t.removeAttribute("usemap"), b.set(t, r), r);
+  const o = Array.from(e.querySelectorAll("area")).map((s, i) => T(s, i, e, n.width, n.height)).filter(Boolean).reverse();
+  return o.length === 0 ? (console.warn("[svg-map] The matching map has no valid regions; leaving its native image map active.", e), null) : (r.append(...o), W(t, r), t.removeAttribute("usemap"), b.set(t, r), r);
 }
 function k(t) {
   if (b.has(t)) return Promise.resolve(b.get(t));

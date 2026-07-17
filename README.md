@@ -4,7 +4,8 @@ Turn HTML image maps into responsive, CSS-styleable SVG overlays in the browser.
 The converter has no runtime dependencies, preserves the original `<map>` in the
 DOM, and works with current Chrome, Firefox, Safari, and Edge.
 
-![A simple demo of the SVG overlay.](./demo.webp)
+[Try the live responsive demo](https://jessefalzone.github.io/svg-map/) or open
+[`index.html`](./index.html) locally.
 
 ## Browser script
 
@@ -115,8 +116,8 @@ npm test
 npm run build
 ```
 
-Open [`demo/index.html`](./demo/index.html) to manually check responsive sizing,
-hover styling, and keyboard navigation.
+Open [`index.html`](./index.html) to manually check responsive sizing, hover
+styling, and keyboard navigation. The same page is deployed to GitHub Pages.
 
 ## Legacy Python CLI
 

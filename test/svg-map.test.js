@@ -41,6 +41,7 @@ describe("convertImageMap", () => {
       "default", "invalid", "missing", "poly", "circle", "first",
     ]);
     expect(svg.lastElementChild.dataset.svgMapSourceId).toBe("first");
+    expect(svg.lastElementChild.getAttribute("tabindex")).toBe("0");
     expect(svg.querySelector('[data-svg-map-source-id="first"] rect').outerHTML).toContain('x="10"');
     expect(svg.querySelector('[data-svg-map-source-id="first"] rect').outerHTML).toContain('width="80.5"');
     expect(svg.querySelector('[data-svg-map-source-id="poly"]').getAttribute("points")).toBe("0,0 50,0 25,40");
@@ -68,6 +69,7 @@ describe("convertImageMap", () => {
     expect(link.classList.contains("hot")).toBe(true);
     expect(link.getAttribute("href")).toBe("/go");
     expect(link.getAttribute("referrerpolicy")).toBe("no-referrer");
+    expect(link.getAttribute("tabindex")).toBe("2");
     expect(link.getAttribute("aria-label")).toBe("Go there");
     expect(link.getAttribute("xml:lang")).toBe("fr");
     expect(link.getAttribute("dir")).toBe("ltr");

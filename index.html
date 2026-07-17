@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta
+            name="description"
+            content="Dependency-free JavaScript that converts HTML image maps into responsive SVG overlays."
+        />
+        <title>SVG Map</title>
+        <style>
+            :root {
+                font-family:
+                    "Iowan Old Style", "Palatino Linotype", "URW Palladio L",
+                    P052, serif;
+                line-height: 1.5;
+                color: #222;
+            }
+            body {
+                max-width: 900px;
+                margin: 0 auto;
+                padding: 1rem;
+            }
+            header {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                gap: 1rem;
+                border-bottom: 1px solid #ccc;
+            }
+            nav {
+                display: flex;
+                gap: 1rem;
+            }
+            main,
+            footer {
+                padding-block: 1.5rem;
+            }
+            section {
+                margin-block: 2.5rem;
+            }
+            h1,
+            h2 {
+                line-height: 1.2;
+            }
+            h1 {
+                margin-bottom: 0.25rem;
+            }
+            h2 {
+                margin-top: 0;
+            }
+            code,
+            pre {
+                font-family: ui-monospace, monospace;
+            }
+            code {
+                background: #f3f3f3;
+                padding: 0.1rem 0.25rem;
+            }
+            pre {
+                padding: 1rem;
+                overflow-x: auto;
+                border: 1px solid #ccc;
+                background: #f7f7f7;
+            }
+            button {
+                font: inherit;
+            }
+            fieldset {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+                border: 0;
+                padding: 0;
+            }
+            fieldset span {
+                margin-right: 0.5rem;
+            }
+            button[aria-pressed="true"] {
+                font-weight: bold;
+            }
+            .demo-frame {
+                width: var(--demo-width, 100%);
+                max-width: 100%;
+            }
+            .demo-image {
+                display: block;
+                width: 100%;
+                height: auto;
+                box-sizing: border-box;
+                border: 1px solid #aaa;
+            }
+            .svg-map {
+                width: 100%;
+                max-width: 100%;
+            }
+            .svg-map__area {
+                fill: transparent;
+                stroke: transparent;
+                stroke-width: 4;
+                stroke-linejoin: round;
+                vector-effect: non-scaling-stroke;
+                transform-box: fill-box;
+                transform-origin: center;
+            }
+            .show-regions .svg-map__link .svg-map__area {
+                fill: rgb(0 100 200 / 14%);
+                stroke: #327eb8;
+                filter: drop-shadow(0 0 3px rgb(0 100 200 / 45%));
+            }
+            .svg-map__link:hover .svg-map__area,
+            .svg-map__link:focus .svg-map__area {
+                fill: transparent;
+                filter: none;
+            }
+            .svg-map__link[href="#circle"]:hover .svg-map__area,
+            .svg-map__link[href="#circle"]:focus .svg-map__area {
+                stroke: #d52b3f;
+                stroke-width: 6;
+                animation: circle-outline 750ms ease-in-out infinite alternate;
+            }
+            .svg-map__link[href="#square"]:hover .svg-map__area,
+            .svg-map__link[href="#square"]:focus .svg-map__area {
+                stroke: #6648c8;
+                stroke-width: 5;
+                stroke-dasharray: 12 7;
+                animation: square-outline 900ms linear infinite;
+            }
+            .svg-map__link[href="#triangle"]:hover .svg-map__area,
+            .svg-map__link[href="#triangle"]:focus .svg-map__area {
+                stroke: #d81b80;
+                stroke-width: 7;
+                stroke-linejoin: bevel;
+                animation: triangle-outline 700ms ease-in-out infinite alternate;
+            }
+            .svg-map__link[href="#diamond"]:hover .svg-map__area,
+            .svg-map__link[href="#diamond"]:focus .svg-map__area {
+                stroke: #b95800;
+                stroke-width: 6;
+                stroke-dasharray: 1 9;
+                stroke-linecap: round;
+                animation: diamond-outline 800ms linear infinite;
+            }
+            @keyframes circle-outline {
+                to {
+                    stroke-width: 10;
+                }
+            }
+            @keyframes square-outline {
+                to {
+                    stroke-dashoffset: -19;
+                }
+            }
+            @keyframes triangle-outline {
+                to {
+                    stroke-opacity: 0.25;
+                }
+            }
+            @keyframes diamond-outline {
+                to {
+                    stroke-dashoffset: 10;
+                }
+            }
+            #active-region {
+                min-height: 1.5em;
+            }
+            .shape-list {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1rem;
+                padding: 0;
+                list-style: none;
+            }
+            .shape-list li {
+                border-top: 1px solid #ccc;
+                padding-top: 0.5rem;
+            }
+            footer {
+                border-top: 1px solid #ccc;
+                font-size: 0.9rem;
+            }
+            @media (max-width: 600px) {
+                header {
+                    align-items: flex-start;
+                    flex-direction: column;
+                    padding-bottom: 1rem;
+                }
+                .shape-list {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                .svg-map__link:hover .svg-map__area,
+                .svg-map__link:focus .svg-map__area {
+                    animation: none;
+                }
+            }
+        </style>
+        <script defer src="./dist/svg-map.js"></script>
+        <script defer src="./demo/page.js"></script>
+    </head>
+    <body>
+        <header>
+            <h1>SVG Map</h1>
+            <nav aria-label="Primary navigation">
+                <a href="#demo">Demo</a>
+                <a href="#usage">Usage</a>
+                <a href="https://github.com/jessefalzone/svg-map">GitHub</a>
+            </nav>
+        </header>
+
+        <main>
+            <p>
+                Convert ordinary HTML image maps into responsive,
+                keyboard-focusable SVG overlays in the browser. Style and
+                animate the map regions with CSS and let the browser handle the
+                rest.
+            </p>
+            <ul>
+                <li>
+                    Supports <code>rect</code>, <code>circle</code>,
+                    <code>poly</code>, and <code>default</code> shapes.
+                </li>
+                <li>
+                    Transfers links, accessibility labels, and compatible HTML
+                    attributes to the generated SVG regions.
+                </li>
+                <li>Works via an auto-running bundle or an ES module.</li>
+                <li>No runtime dependencies.</li>
+            </ul>
+
+            <section aria-labelledby="why-heading">
+                <h2 id="why-heading">Why image maps?</h2>
+                <p>
+                    I think image maps are cool. They are a simple way to attach
+                    links to parts of an image. Their fixed coordinates,
+                    however, do not adapt to responsive layouts, and their
+                    regions are difficult to style.
+                </p>
+                <p>
+                    SVG Map converts <code>&lt;map&gt;</code> markup into SVG
+                    geometry that scales with the image and can be styled, or
+                    even animated, with CSS. Nostalgia of the '90s on the modern
+                    web.
+                </p>
+            </section>
+
+            <section id="demo" aria-labelledby="demo-heading">
+                <h2 id="demo-heading">Live demo</h2>
+                <p>
+                    Hover, click, or use Tab to move between the four mapped
+                    shapes. Change the image width to confirm that the regions
+                    remain aligned.
+                </p>
+
+                <fieldset aria-label="Demo controls">
+                    <span>Image width:</span>
+                    <button type="button" data-size="100" aria-pressed="true">
+                        100%
+                    </button>
+                    <button type="button" data-size="75" aria-pressed="false">
+                        75%
+                    </button>
+                    <button type="button" data-size="50" aria-pressed="false">
+                        50%
+                    </button>
+                    <label
+                        ><input id="show-regions" type="checkbox" /> Show all
+                        regions</label
+                    >
+                </fieldset>
+
+                <div class="demo-frame" id="demo-frame">
+                    <img
+                        id="shapes-image"
+                        class="demo-image"
+                        src="./demo/shapes.svg"
+                        width="800"
+                        height="260"
+                        usemap="#shapes-map"
+                        alt="A circle, square, triangle, and diamond"
+                    />
+                    <map name="shapes-map">
+                        <area
+                            shape="circle"
+                            coords="110,130,70"
+                            href="#circle"
+                            alt="Circle"
+                            data-shape="circle"
+                            data-coordinates="110, 130, 70"
+                        />
+                        <area
+                            shape="rect"
+                            coords="230,60,370,200"
+                            href="#square"
+                            alt="Square"
+                            data-shape="rectangle"
+                            data-coordinates="230, 60, 370, 200"
+                        />
+                        <area
+                            shape="poly"
+                            coords="470,55,390,200,550,200"
+                            href="#triangle"
+                            alt="Triangle"
+                            data-shape="polygon"
+                            data-coordinates="470,55 390,200 550,200"
+                        />
+                        <area
+                            shape="poly"
+                            coords="670,50,760,130,670,210,580,130"
+                            href="#diamond"
+                            alt="Diamond"
+                            data-shape="polygon"
+                            data-coordinates="670,50 760,130 670,210 580,130"
+                        />
+                        <area shape="default" alt="Background" />
+                    </map>
+                </div>
+
+                <p id="active-region" aria-live="polite">
+                    Active region: Circle (circle)
+                </p>
+                <ul class="shape-list">
+                    <li id="circle">
+                        <strong>Circle</strong><br /><code>circle</code>
+                    </li>
+                    <li id="square">
+                        <strong>Square</strong><br /><code>rect</code>
+                    </li>
+                    <li id="triangle">
+                        <strong>Triangle</strong><br /><code>poly</code>
+                    </li>
+                    <li id="diamond">
+                        <strong>Diamond</strong><br /><code>poly</code>
+                    </li>
+                </ul>
+            </section>
+
+            <section id="usage" aria-labelledby="usage-heading">
+                <h2 id="usage-heading">Usage</h2>
+                <pre><code>&lt;script src="svg-map.js"&gt;&lt;/script&gt;
+
+&lt;img src="shapes.svg" width="800" height="260" usemap="#shapes"&gt;
+&lt;map name="shapes"&gt;
+  &lt;area shape="circle" coords="110,130,70" href="#circle" alt="Circle"&gt;
+&lt;/map&gt;</code></pre>
+
+                <p>Or use the module API:</p>
+                <pre><code>import { convertImageMap, convertAll, init } from "svg-map";
+
+await init();</code></pre>
+                <p>
+                    See the
+                    <a href="https://github.com/jessefalzone/svg-map#module-api"
+                        >README</a
+                    >
+                    for API and attribute-transfer details.
+                </p>
+            </section>
+        </main>
+
+        <footer>
+            <p>SVG Map is available under the MIT License.</p>
+        </footer>
+    </body>
+</html>
