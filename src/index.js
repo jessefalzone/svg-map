@@ -53,8 +53,12 @@ function parseCoordinates(
   }
 
   let parts = value.split(",");
-  if (limit) parts = parts.slice(0, limit);
-  if (dropUnpaired && parts.length % 2 === 1) parts.pop();
+  if (limit) {
+    parts = parts.slice(0, limit);
+  }
+  if (dropUnpaired && parts.length % 2 === 1) {
+    parts.pop();
+  }
   const coordinates = [];
   for (const part of parts) {
     const token = part.trim();
@@ -95,7 +99,9 @@ function buildGeometry(area, index, map, width, height) {
       limit: shape === "rect" ? 4 : shape === "circle" ? 3 : undefined,
       dropUnpaired: shape === "poly",
     });
-    if (!coordinates) return null;
+    if (!coordinates) {
+      return null;
+    }
 
     if (shape === "rect") {
       if (coordinates.length < 4) {
@@ -165,30 +171,40 @@ function isTransferableGlobalAttribute(name) {
 }
 
 function transferAttributes(area, target, includeLinkAttributes) {
-  if (area.hasAttribute("alt"))
+  if (area.hasAttribute("alt")) {
     target.setAttribute("aria-label", area.getAttribute("alt"));
-  if (area.id) target.setAttribute("data-svg-map-source-id", area.id);
+  }
+  if (area.id) {
+    target.setAttribute("data-svg-map-source-id", area.id);
+  }
 
   for (const attribute of area.attributes) {
     const name = attribute.name.toLowerCase();
-    if (name === "id" || name === "alt" || name === "title") continue;
+    if (name === "id" || name === "alt" || name === "title") {
+      continue;
+    }
     if (name === "class") {
-      for (const className of attribute.value.split(/\s+/).filter(Boolean))
+      for (const className of attribute.value.split(/\s+/).filter(Boolean)) {
         target.classList.add(className);
+      }
     } else if (
       (includeLinkAttributes && LINK_ATTRIBUTES.has(name)) ||
       isTransferableGlobalAttribute(name)
     ) {
-      if (name === "xml:lang")
+      if (name === "xml:lang") {
         target.setAttributeNS(XML_NS, name, attribute.value);
-      else target.setAttribute(name, attribute.value);
+      } else {
+        target.setAttribute(name, attribute.value);
+      }
     }
   }
 }
 
 function buildRegion(area, index, map, width, height) {
   const geometry = buildGeometry(area, index, map, width, height);
-  if (!geometry) return null;
+  if (!geometry) {
+    return null;
+  }
 
   if (area.hasAttribute("title")) {
     const title = createSVGElement(area.ownerDocument, "title");
@@ -204,7 +220,9 @@ function buildRegion(area, index, map, width, height) {
   const link = createSVGElement(area.ownerDocument, "a");
   link.classList.add("svg-map__link");
   transferAttributes(area, link, true);
-  if (!area.hasAttribute("tabindex")) link.setAttribute("tabindex", "0");
+  if (!area.hasAttribute("tabindex")) {
+    link.setAttribute("tabindex", "0");
+  }
   link.append(geometry);
   return link;
 }
@@ -228,8 +246,12 @@ function intrinsicDimensions(image) {
 
 function waitForDimensions(image) {
   const dimensions = explicitDimensions(image) || intrinsicDimensions(image);
-  if (dimensions) return Promise.resolve(dimensions);
-  if (image.complete) return Promise.resolve(null);
+  if (dimensions) {
+    return Promise.resolve(dimensions);
+  }
+  if (image.complete) {
+    return Promise.resolve(null);
+  }
 
   return new Promise((resolve) => {
     const finish = () => {
@@ -256,7 +278,9 @@ function waitForDimensions(image) {
 
 function mapNameFromUsemap(image) {
   const usemap = image.getAttribute("usemap")?.trim();
-  if (!usemap || !usemap.startsWith("#") || usemap.length === 1) return null;
+  if (!usemap || !usemap.startsWith("#") || usemap.length === 1) {
+    return null;
+  }
   const name = usemap.slice(1);
   try {
     return decodeURIComponent(name);
@@ -267,7 +291,9 @@ function mapNameFromUsemap(image) {
 
 function findMap(image) {
   const name = mapNameFromUsemap(image);
-  if (!name) return null;
+  if (!name) {
+    return null;
+  }
   return (
     Array.from(image.ownerDocument.getElementsByTagName("map")).find(
       (map) => map.getAttribute("name") === name,
@@ -291,7 +317,9 @@ function installOverlay(image, svg) {
   svg.style.inset = "0";
   svg.style.pointerEvents = "none";
 
-  if (image.parentNode) image.parentNode.insertBefore(wrapper, image);
+  if (image.parentNode) {
+    image.parentNode.insertBefore(wrapper, image);
+  }
   wrapper.append(image, svg);
 }
 
@@ -300,7 +328,9 @@ async function performConversion(image) {
     console.warn("[svg-map] convertImageMap expected an <img> element.", image);
     return null;
   }
-  if (!image.hasAttribute("usemap")) return null;
+  if (!image.hasAttribute("usemap")) {
+    return null;
+  }
 
   const map = findMap(image);
   if (!map) {
@@ -348,9 +378,12 @@ async function performConversion(image) {
 
 /** Convert one image map, resolving after image dimensions are available. */
 export function convertImageMap(image) {
-  if (convertedImages.has(image))
+  if (convertedImages.has(image)) {
     return Promise.resolve(convertedImages.get(image));
-  if (pendingConversions.has(image)) return pendingConversions.get(image);
+  }
+  if (pendingConversions.has(image)) {
+    return pendingConversions.get(image);
+  }
   const conversion = performConversion(image).finally(() =>
     pendingConversions.delete(image),
   );
@@ -363,8 +396,9 @@ export function convertImageMap(image) {
 /** Convert every img[usemap] in root. */
 export async function convertAll(root = document) {
   const images = [];
-  if (root && root.nodeType === 1 && root.matches("img[usemap]"))
+  if (root && root.nodeType === 1 && root.matches("img[usemap]")) {
     images.push(root);
+  }
   if (root && typeof root.querySelectorAll === "function") {
     images.push(...root.querySelectorAll("img[usemap]"));
   }
@@ -373,7 +407,9 @@ export async function convertAll(root = document) {
 }
 
 function ready(document) {
-  if (document.readyState !== "loading") return Promise.resolve();
+  if (document.readyState !== "loading") {
+    return Promise.resolve();
+  }
   return new Promise((resolve) =>
     document.addEventListener("DOMContentLoaded", resolve, { once: true }),
   );
@@ -382,6 +418,8 @@ function ready(document) {
 /** Wait for DOM readiness, then convert images within root. */
 export async function init(root = document) {
   const ownerDocument = root.nodeType === 9 ? root : root.ownerDocument;
-  if (ownerDocument) await ready(ownerDocument);
+  if (ownerDocument) {
+    await ready(ownerDocument);
+  }
   return convertAll(root);
 }
